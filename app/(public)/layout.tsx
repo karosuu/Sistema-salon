@@ -3,6 +3,8 @@ import { SiteHeader } from "@/components/public/site-header";
 import { WhatsAppButton } from "@/components/public/whatsapp-button";
 import { getDisplayHours, getSalonContent } from "@/lib/data";
 
+export const dynamic = "force-dynamic";
+
 export default async function PublicLayout({
   children,
 }: {

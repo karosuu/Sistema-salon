@@ -8,7 +8,14 @@ import { getServerSession } from "next-auth";
 import { ADMIN_ROUTES } from "@/lib/constants";
 import { loginSchema } from "@/lib/validations/auth";
 
+const vercelHost =
+  process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL;
+if (vercelHost) {
+  process.env.NEXTAUTH_URL = `https://${vercelHost}`;
+}
+
 export const authOptions: NextAuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET,
   session: {
     strategy: "jwt",
     maxAge: 60 * 60 * 8,
@@ -24,7 +31,10 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Contraseña", type: "password" },
       },
       async authorize(credentials) {
-        const parsed = loginSchema.safeParse(credentials);
+        const parsed = loginSchema.safeParse({
+          email: credentials?.email,
+          password: credentials?.password,
+        });
         if (!parsed.success) {
           return null;
         }
@@ -50,7 +60,8 @@ export const authOptions: NextAuthOptions = {
             email: admin.email,
             name: admin.name,
           };
-        } catch {
+        } catch (error) {
+          console.error("[auth] no se pudo consultar AdminUser", error);
           return null;
         }
       },
