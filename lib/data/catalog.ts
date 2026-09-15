@@ -49,7 +49,8 @@ export async function getPublicServices(): Promise<PublicService[]> {
       },
     });
     return rows;
-  } catch {
+  } catch (error) {
+    console.error("[catalog] no se pudieron leer servicios", error);
     return [];
   }
 }
@@ -104,7 +105,8 @@ export async function getPublicProfessionals(
         .filter((item) => item.service.isActive)
         .map((item) => ({ id: item.service.id, name: item.service.name })),
     }));
-  } catch {
+  } catch (error) {
+    console.error("[catalog] no se pudieron leer profesionales", error);
     return [];
   }
 }
