@@ -1,26 +1,84 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --navy: #0b1f3a;
+  --navy-soft: #163056;
+  --cyan: #1bc7d4;
+  --cyan-deep: #0e8f9a;
+  --violet: #7c3aed;
+  --magenta: #e11d8f;
+  --cream: #f7f4f0;
+  --cream-deep: #efe8df;
+  --surface: #ffffff;
+  --ink: #0b1f3a;
+  --muted: #5b6472;
+  --border: #e4ddd4;
+  --success: #0f766e;
+  --success-soft: #ccfbf1;
+  --danger: #be123c;
+  --danger-soft: #ffe4e6;
+  --ring: #7c3aed;
+  --shadow-card: 0 20px 50px -28px rgb(11 31 58 / 0.35);
+  --shadow-float: 0 16px 40px -18px rgb(11 31 58 / 0.28);
+  --background: var(--cream);
+  --foreground: var(--ink);
 }
 
 @theme inline {
+  --color-navy: var(--navy);
+  --color-navy-soft: var(--navy-soft);
+  --color-cyan: var(--cyan);
+  --color-cyan-deep: var(--cyan-deep);
+  --color-violet: var(--violet);
+  --color-magenta: var(--magenta);
+  --color-cream: var(--cream);
+  --color-cream-deep: var(--cream-deep);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-outfit);
+  --font-display: var(--font-fraunces);
+  --radius-sm: 0.5rem;
+  --radius-md: 0.85rem;
+  --radius-lg: 1.35rem;
+  --radius-full: 999px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background:
+    radial-gradient(1200px 480px at 8% -10%, rgb(27 199 212 / 0.14), transparent 55%),
+    radial-gradient(900px 420px at 100% 0%, rgb(225 29 143 / 0.1), transparent 50%),
+    radial-gradient(700px 380px at 80% 100%, rgb(124 58 237 / 0.08), transparent 55%),
+    var(--cream);
+  color: var(--ink);
+  font-family: var(--font-outfit), Arial, Helvetica, sans-serif;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+
+dialog {
+  margin: auto;
+}
+
+::selection {
+  background: rgb(124 58 237 / 0.2);
+  color: var(--navy);
+}
+
+.font-display {
+  font-family: var(--font-fraunces), Georgia, "Times New Roman", serif;
 }

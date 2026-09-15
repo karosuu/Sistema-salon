@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 64" fill="none" role="img" aria-labelledby="logoTitle">
+  <title id="logoTitle">Pixel-Craft Salón (DEMO)</title>
+  <defs>
+    <linearGradient id="pcBloomFull" x1="8" y1="56" x2="56" y2="8" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1BC7D4"/>
+      <stop offset="0.48" stop-color="#7C3AED"/>
+      <stop offset="1" stop-color="#E11D8F"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(0 0)">
+    <path fill="url(#pcBloomFull)" d="M32 6c4.8 8.6 9.4 13.2 16.8 16.8C40.2 26.4 35.6 31 32 39.6 27.2 31 22.6 26.4 15.2 22.8 22.8 19.2 27.4 14.6 32 6Z"/>
+    <path fill="url(#pcBloomFull)" opacity="0.72" d="M32 18.5c3.2 5.6 6.2 8.6 11 11-4.8 2.4-7.8 5.4-11 11-3.2-5.6-6.2-8.6-11-11 4.8-2.4 7.8-5.4 11-11Z"/>
+    <circle cx="32" cy="29.5" r="4.2" fill="#0B1F3A"/>
+  </g>
+  <text x="78" y="30" fill="#0B1F3A" font-family="Georgia, 'Times New Roman', serif" font-size="26" font-weight="600" letter-spacing="-0.04em">Pixel-Craft</text>
+  <text x="78" y="50" fill="#5B6472" font-family="Arial, Helvetica, sans-serif" font-size="11" letter-spacing="0.28em">SALÓN · DEMO</text>
+</svg>

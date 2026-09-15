@@ -1,0 +1,227 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+enum Weekday {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Customer {
+  id           String        @id @default(cuid())
+  name         String
+  phone        String        @unique
+  email        String?
+  notes        String?
+  preferences  String?
+  birthDate    DateTime?     @db.Date
+  appointments Appointment[]
+  sales        Sale[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([name])
+  @@index([email])
+}
+
+model Service {
+  id            String                @id @default(cuid())
+  name          String
+  description   String
+  /// Precio en colones enteros (CRC). No usar decimales flotantes.
+  priceCrc      Int
+  durationMin   Int
+  imageUrl      String?
+  isActive      Boolean               @default(true)
+  professionals ProfessionalService[]
+  appointments  Appointment[]
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+
+  @@index([isActive])
+  @@index([name])
+}
+
+model Professional {
+  id           String                     @id @default(cuid())
+  name         String
+  bio          String
+  photoUrl     String?
+  isActive     Boolean                    @default(true)
+  services     ProfessionalService[]
+  availability ProfessionalAvailability[]
+  appointments Appointment[]
+  blockedTimes BlockedTime[]
+  createdAt    DateTime                   @default(now())
+  updatedAt    DateTime                   @updatedAt
+
+  @@index([isActive])
+  @@index([name])
+}
+
+model ProfessionalService {
+  professionalId String
+  serviceId      String
+  professional   Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  service        Service      @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+
+  @@id([professionalId, serviceId])
+}
+
+/// Horario del salón en hora local America/Costa_Rica (HH:mm).
+model BusinessHours {
+  id        String   @id @default(cuid())
+  weekday   Weekday  @unique
+  opensAt   String
+  closesAt  String
+  isClosed  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Disponibilidad semanal del profesional en hora local America/Costa_Rica (HH:mm).
+model ProfessionalAvailability {
+  id             String       @id @default(cuid())
+  professionalId String
+  weekday        Weekday
+  startsAt       String
+  endsAt         String
+  isOff          Boolean      @default(false)
+  professional   Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([professionalId, weekday])
+}
+
+model Appointment {
+  id             String            @id @default(cuid())
+  /// Código legible único, p. ej. PC-7K2M9A
+  code           String            @unique
+  customerId     String
+  serviceId      String
+  professionalId String
+  /// Instantes UTC. Interpretar siempre en America/Costa_Rica.
+  /// Solapes de PENDING/CONFIRMED se bloquean en SQL (Appointment_no_professional_overlap).
+  startsAt       DateTime
+  endsAt         DateTime
+  /// Precio y duración al momento de reservar (no cambian si el catálogo se edita).
+  priceCrc       Int
+  durationMin    Int
+  status         AppointmentStatus @default(PENDING)
+  notes          String?
+  manageToken    String            @unique
+  manageTokenExp DateTime?
+  confirmedAt    DateTime?
+  cancelledAt    DateTime?
+  completedAt    DateTime?
+  customer       Customer          @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  service        Service           @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  professional   Professional      @relation(fields: [professionalId], references: [id], onDelete: Restrict)
+  sales          Sale[]
+  notifications  NotificationLog[]
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([startsAt])
+  @@index([status])
+  @@index([customerId])
+  @@index([professionalId, status, startsAt])
+  @@index([professionalId, startsAt, endsAt])
+}
+
+/// Venta de mostrador u otro cobro. Si appointmentId está definido, no se suma otra vez
+/// el precio de esa cita en las métricas de CRM.
+model Sale {
+  id            String       @id @default(cuid())
+  customerId    String
+  amountCrc     Int
+  description   String
+  occurredAt    DateTime
+  appointmentId String?      @unique
+  customer      Customer     @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([customerId, occurredAt])
+}
+
+/// Registro de notificaciones. Un fallo de envío no debe revertir la reserva.
+model NotificationLog {
+  id            String        @id @default(cuid())
+  channel       String
+  eventType     String
+  status        String
+  recipient     String
+  subject       String?
+  error         String?
+  appointmentId String?
+  appointment   Appointment?  @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  createdAt     DateTime      @default(now())
+
+  @@index([appointmentId])
+  @@index([eventType, status])
+}
+
+/// Bloqueo de agenda. Si professionalId es nulo, aplica a todo el salón (feriado/cierre).
+model BlockedTime {
+  id             String        @id @default(cuid())
+  professionalId String?
+  startsAt       DateTime
+  endsAt         DateTime
+  reason         String?
+  isHoliday      Boolean       @default(false)
+  professional   Professional? @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([startsAt, endsAt])
+  @@index([professionalId])
+}
+
+/// Configuración del único salón. No hay multi-tenancy en esta versión.
+model SalonSettings {
+  id              String   @id @default("default")
+  name            String
+  tagline         String?
+  phone           String
+  whatsappNumber  String
+  whatsappMessage String
+  email           String?
+  address         String
+  instagramUrl    String?
+  facebookUrl     String?
+  tiktokUrl       String?
+  timezone        String   @default("America/Costa_Rica")
+  currency        String   @default("CRC")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
