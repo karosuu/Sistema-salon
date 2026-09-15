@@ -16,7 +16,8 @@ import { FieldError, FieldHint, Input, Label, Textarea } from "@/components/ui/f
 import { ANY_PROFESSIONAL_ID, BOOKING_HORIZON_DAYS } from "@/lib/availability/engine";
 import { PUBLIC_ROUTES } from "@/lib/constants";
 import { formatCrc, formatDuration } from "@/lib/money";
-import { addCalendarDays, formatDateCR } from "@/lib/timezone";
+import { WEEKDAY_LABELS } from "@/lib/salon/hours";
+import { addCalendarDays, formatDateCR, formatYmdLong, weekdayFromYmd } from "@/lib/timezone";
 
 type ServiceOption = {
   id: string;
@@ -85,6 +86,7 @@ export function BookingWizard({
     professionalId && professionalId !== ANY_PROFESSIONAL_ID
       ? compatible.find((item) => item.id === professionalId) ?? null
       : null;
+  const selectedDateLabel = `${WEEKDAY_LABELS[weekdayFromYmd(ymd)]}, ${formatYmdLong(ymd)}`;
 
   function go(next: number) {
     setError(null);
@@ -246,21 +248,31 @@ export function BookingWizard({
       ) : null}
 
       {step === 3 ? (
-        <div>
+        <div className="space-y-4">
+          <div>
+            <p className="text-xs font-semibold tracking-[0.28em] text-cyan-deep uppercase">
+              Horarios para
+            </p>
+            <h2 className="font-display mt-1 text-2xl text-navy sm:text-3xl">{selectedDateLabel}</h2>
+            <p className="mt-2 text-sm text-muted">
+              Horas en Costa Rica. Elegí un espacio libre; con Volver podés cambiar el día.
+            </p>
+          </div>
           {pending && slots.length === 0 ? (
             <p className="text-sm text-muted">Buscando horarios libres…</p>
           ) : slots.length === 0 ? (
             <p className="text-sm text-muted">
-              No hay horarios libres ese día. Probá otra fecha o profesional.
+              No hay horarios libres el {selectedDateLabel}. Probá otra fecha o profesional.
             </p>
           ) : (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2" role="list" aria-label={`Horas libres el ${selectedDateLabel}`}>
               {slots.map((item) => (
                 <Button
                   key={item.startsAt}
                   type="button"
                   variant={slot?.startsAt === item.startsAt ? "primary" : "secondary"}
                   size="sm"
+                  aria-label={`${selectedDateLabel} a las ${item.label}`}
                   onClick={() => {
                     setSlot(item);
                     go(4);
