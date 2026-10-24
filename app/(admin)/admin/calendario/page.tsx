@@ -1,13 +1,14 @@
 import Link from "next/link";
 
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { CalendarDayJump } from "@/components/admin/calendar-day-jump";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { appointmentStatusLabel, appointmentStatusTone } from "@/lib/appointments/status";
 import { ADMIN_ROUTES } from "@/lib/constants";
 import { listAdminProfessionals, listCalendarAppointments } from "@/lib/data";
-import { addCalendarDays, formatTimeCR, formatYmdLong, utcToCostaRicaYmd } from "@/lib/timezone";
+import { addCalendarDays, formatTimeCR, utcToCostaRicaYmd } from "@/lib/timezone";
 
 export default async function AdminCalendarPage({
   searchParams,
@@ -36,7 +37,7 @@ export default async function AdminCalendarPage({
         <ButtonLink href={`${ADMIN_ROUTES.calendar}?fecha=${prev}`} variant="secondary" size="sm">
           Día anterior
         </ButtonLink>
-        <p className="text-sm font-semibold text-navy">{formatYmdLong(ymd)}</p>
+        <CalendarDayJump ymd={ymd} />
         <ButtonLink href={`${ADMIN_ROUTES.calendar}?fecha=${next}`} variant="secondary" size="sm">
           Día siguiente
         </ButtonLink>

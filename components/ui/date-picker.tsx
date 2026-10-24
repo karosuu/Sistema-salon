@@ -70,6 +70,7 @@ type DatePickerProps = {
   max?: string;
   allowEmpty?: boolean;
   placeholder?: string;
+  variant?: "field" | "inline";
 };
 
 export function DatePicker({
@@ -81,6 +82,7 @@ export function DatePicker({
   max,
   allowEmpty = false,
   placeholder = "Elegí una fecha",
+  variant = "field",
 }: DatePickerProps) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
@@ -139,21 +141,33 @@ export function DatePicker({
   const display = value ? formatYmdLong(value) : placeholder;
 
   return (
-    <div ref={containerRef} className="relative mt-1">
+    <div ref={containerRef} className={cn("relative", variant === "field" && "mt-1")}>
       {name ? <input type="hidden" name={name} value={value} /> : null}
       <button
         id={inputId}
         type="button"
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-label={value ? `Fecha seleccionada: ${display}` : "Abrir calendario"}
+        aria-label={value ? `Fecha seleccionada: ${display}. Abrir calendario` : "Abrir calendario"}
         onClick={() => setOpen((current) => !current)}
-        className="flex min-h-11 w-full items-center justify-between rounded-[var(--radius-md)] border border-border bg-surface px-3 text-left text-ink"
+        className={
+          variant === "inline"
+            ? "inline-flex min-h-10 items-center rounded-full px-3 text-sm font-semibold text-navy hover:bg-cream-deep"
+            : "flex min-h-11 w-full items-center justify-between rounded-[var(--radius-md)] border border-border bg-surface px-3 text-left text-ink"
+        }
       >
-        <span className={value ? "text-ink" : "text-muted"}>{display}</span>
-        <span className="text-xs font-semibold tracking-wide text-muted uppercase">
-          Calendario
+        <span
+          className={
+            variant === "inline" ? "text-navy" : value ? "text-ink" : "text-muted"
+          }
+        >
+          {display}
         </span>
+        {variant === "field" ? (
+          <span className="text-xs font-semibold tracking-wide text-muted uppercase">
+            Calendario
+          </span>
+        ) : null}
       </button>
 
       {open ? (
