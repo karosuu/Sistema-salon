@@ -140,6 +140,7 @@ export async function createPublicBooking(
         professionalId,
         startsAt,
         now,
+        db: tx,
       });
       if (!stillOpen) {
         throw new ConflictError(

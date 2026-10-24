@@ -1,5 +1,7 @@
 import "server-only";
 
+import type { Prisma, PrismaClient } from "@prisma/client";
+
 import {
   ANY_PROFESSIONAL_ID,
   BOOKING_HORIZON_DAYS,
@@ -23,6 +25,8 @@ import {
   weekdayFromYmd,
 } from "@/lib/timezone";
 
+type Db = Prisma.TransactionClient | PrismaClient;
+
 export type PublicSlot = {
   startsAt: string;
   endsAt: string;
@@ -39,6 +43,7 @@ type SlotQuery = {
   ymd: string;
   now?: Date;
   ignoreAppointmentId?: string;
+  db?: Db;
 };
 
 function isYmd(value: string): boolean {
@@ -66,14 +71,19 @@ function toBusyWindows(
     .filter((row): row is TimeWindow => row !== null);
 }
 
-async function loadDayContext(ymd: string, professionalIds: string[], ignoreAppointmentId?: string) {
+async function loadDayContext(
+  ymd: string,
+  professionalIds: string[],
+  ignoreAppointmentId?: string,
+  db: Db = prisma,
+) {
   const weekday = weekdayFromYmd(ymd);
   const dayStart = costaRicaDayStartUtc(ymd);
   const dayEnd = costaRicaDayStartUtc(addCalendarDays(ymd, 1));
 
   const [salonHours, professionals, blocked, appointments] = await Promise.all([
-    prisma.businessHours.findUnique({ where: { weekday } }),
-    prisma.professional.findMany({
+    db.businessHours.findUnique({ where: { weekday } }),
+    db.professional.findMany({
       where: { id: { in: professionalIds } },
       select: {
         id: true,
@@ -85,7 +95,7 @@ async function loadDayContext(ymd: string, professionalIds: string[], ignoreAppo
         },
       },
     }),
-    prisma.blockedTime.findMany({
+    db.blockedTime.findMany({
       where: {
         startsAt: { lt: dayEnd },
         endsAt: { gt: dayStart },
@@ -93,7 +103,7 @@ async function loadDayContext(ymd: string, professionalIds: string[], ignoreAppo
       },
       select: { professionalId: true, startsAt: true, endsAt: true },
     }),
-    prisma.appointment.findMany({
+    db.appointment.findMany({
       where: {
         professionalId: { in: professionalIds },
         status: { in: [...SLOT_BLOCKING_STATUSES] },
@@ -108,8 +118,8 @@ async function loadDayContext(ymd: string, professionalIds: string[], ignoreAppo
   return { weekday, salonHours, professionals, blocked, appointments };
 }
 
-export async function getCompatibleProfessionals(serviceId: string) {
-  return prisma.professional.findMany({
+export async function getCompatibleProfessionals(serviceId: string, db: Db = prisma) {
+  return db.professional.findMany({
     where: {
       isActive: true,
       services: { some: { serviceId, service: { isActive: true } } },
@@ -131,7 +141,8 @@ export async function listAvailableSlots(query: SlotQuery): Promise<PublicSlot[]
     return [];
   }
 
-  const service = await prisma.service.findFirst({
+  const db = query.db ?? prisma;
+  const service = await db.service.findFirst({
     where: { id: query.serviceId, isActive: true },
     select: { id: true, durationMin: true },
   });
@@ -139,7 +150,7 @@ export async function listAvailableSlots(query: SlotQuery): Promise<PublicSlot[]
     return [];
   }
 
-  const compatible = await getCompatibleProfessionals(service.id);
+  const compatible = await getCompatibleProfessionals(service.id, db);
   const selected =
     query.professionalId === ANY_PROFESSIONAL_ID
       ? compatible
@@ -153,6 +164,7 @@ export async function listAvailableSlots(query: SlotQuery): Promise<PublicSlot[]
     query.ymd,
     selected.map((item) => item.id),
     query.ignoreAppointmentId,
+    db,
   );
 
   const salon = ctx.salonHours
@@ -233,6 +245,7 @@ export async function isSlotOpen(query: {
   startsAt: Date;
   now?: Date;
   ignoreAppointmentId?: string;
+  db?: Db;
 }): Promise<boolean> {
   const ymd = utcToCostaRicaYmd(query.startsAt);
   const slots = await listAvailableSlots({
@@ -241,6 +254,7 @@ export async function isSlotOpen(query: {
     ymd,
     now: query.now,
     ignoreAppointmentId: query.ignoreAppointmentId,
+    db: query.db,
   });
   return slots.some((slot) => slot.startsAt === query.startsAt.toISOString());
 }

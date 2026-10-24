@@ -143,6 +143,7 @@ export async function rescheduleAppointmentRecord(
         professionalId: existing.professionalId,
         startsAt,
         ignoreAppointmentId: id,
+        db: tx,
       });
       if (!open) {
         throw new ConflictError(

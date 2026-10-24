@@ -56,6 +56,7 @@ export async function createPublicBookingAction(
 
     return ok({ code: result.data.code });
   } catch (error) {
+    console.error("[booking] no se pudo crear la reserva", error);
     return err(toPublicErrorMessage(error));
   }
 }
